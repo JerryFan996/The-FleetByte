@@ -134,6 +134,7 @@ while(idx<=secs)               %% Main simulation loop
  array_pst(end+1,1:3)=MPS;
  fprintf("--------------------\n");
  disp(array_pst);
+ fprintf("%d\n", size(array_pst, 1));
  fprintf("--------------------\n");
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % TO DO:
@@ -186,22 +187,21 @@ while(idx<=secs)               %% Main simulation loop
  %          corresponding estimate, taken over time.
  %
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-## if (size(array_pst,1) <= 5)
-##  xyz= array_pst(end,1:3);       % Replace with your computation of position, the map is 512x512 pixels in size
-## else
-##  xyz = [0 0 0];
-##  for i=1:5
-##   if (i == 1)
-##    prop = normcdf(i,5,1) * 2;
-##   else
-##    prop = (normcdf(i,5,1) - normcdf(i-1,5,1)) * 2;
-##   endif
-##   xyz += array_pst(i,1:3) * prop * 2;
-##   array_pst = array_pst(2:end, :);
-##  endfor
-## end
+ if (size(array_pst,1) <= 5)
+  xyz= array_pst(end,1:3);       % Replace with your computation of position, the map is 512x512 pixels in size
+ else
+    xyz = [0 0 0];
+  for i=1:6
+   if (i == 1)
+    prop = normcdf(i,6,1) * 2;
+   else
+    prop = (normcdf(i,6,1) - normcdf(i-1,6,1)) * 2;
+   endif
+   xyz += array_pst(i,1:3) * prop;
+  endfor
+  array_pst = array_pst(2:end, :);
+ end
 
- xyz = [128 128 0.5];
  hr=82;                  % Replace with your computation of heart rate
  di=[0 1];               % Replace with your computation for running direction, this should be a 2D unit vector
  vel=5;                  % Replace with your computation of running velocity, in Km/h
