@@ -131,10 +131,42 @@ persistent array_angle = [];
 idx=1;
 while(idx<=secs)               %% Main simulation loop
  [MPS,HRS,Rg]=Sim1(map);       % Simulates 1-second of running and returns the sensor readings
+ 
  array_pst(end+1,1:3)=MPS;
+ 
  fprintf("--------------------\n");
- disp(array_pst);
- fprintf("%d\n", size(array_pst, 1));
+ Fs = 120;               % Sampling frequency                    
+ T = 1/Fs;                   % Sampling period       
+ L = 1200;                % Length of signal
+ t = (0:1199)/120;             % Time vector
+ 
+ if (floor(t*120) == 0)
+   X = 0;
+ else
+   X = HRS(floor(t*120 + 1));   
+ endif
+ Y = fft(X);
+
+ P2 = abs(Y/L);
+ P1 = P2(1:L/2+1);
+ P1(2:end-1) = 2*P1(2:end-1);
+ f = Fs*(0:(L/2))/L;
+ 
+ max_1 = 0;
+ freq_1 = 0;
+ for i=1:601
+   f_i = f(1,i);
+   P1_i = P1(i,1);
+   if (f_i>0 && f_i<10 && P1_i > max_1)
+     max_1 = P1_i;
+     freq_1 = f_i;
+   endif
+ endfor
+ 
+ 
+ 
+ array_hrs(end+1) = freq_1*60*0.5;
+ 
  fprintf("--------------------\n");
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % TO DO:
@@ -188,21 +220,35 @@ while(idx<=secs)               %% Main simulation loop
  %
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if (size(array_pst,1) <= 5)
-  xyz= array_pst(end,1:3);       % Replace with your computation of position, the map is 512x512 pixels in size
+  xyz = array_pst(end,1:3);       % Replace with your computation of position, the map is 512x512 pixels in size
+  hr = array_hrs(end);
  else
     xyz = [0 0 0];
+    hr = 0;
   for i=1:6
    if (i == 1)
     prop = normcdf(i,6,1) * 2;
+    if (array_hrs(i) < mean(array_hrs)/2)
+      array_hrs(i) = array_hrs(2);
+    endif
+   elseif (i != 6)
+    prop = (normcdf(i,6,1) - normcdf(i-1,6,1)) * 2;
+    if (array_hrs(i) < mean(array_hrs)/2)
+      array_hrs(i) = (array_hrs(i-1) + array_hrs(i-1)) / 2;
+    endif
    else
     prop = (normcdf(i,6,1) - normcdf(i-1,6,1)) * 2;
+    if (array_hrs(i) < mean(array_hrs)/2)
+      array_hrs(i) = array_hrs(5); 
+    endif
    endif
    xyz += array_pst(i,1:3) * prop;
+   hr += array_hrs(i) * prop;
   endfor
   array_pst = array_pst(2:end, :);
+  array_hrs = array_hrs(2:end);
  end
 
- hr=82;                  % Replace with your computation of heart rate
  di=[0 1];               % Replace with your computation for running direction, this should be a 2D unit vector
  vel=5;                  % Replace with your computation of running velocity, in Km/h
 
