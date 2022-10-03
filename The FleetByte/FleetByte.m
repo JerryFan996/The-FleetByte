@@ -119,6 +119,7 @@
 function []=FleetByte(secs, map, debug)
 
 pkg load image;             %%% UNCOMMENT THIS FOR OCTAVE - Octave is doofus and requires this line... arghh!
+pkg load statistics;
 
 close all;
 %%%%%%%%%% YOU CAN ADD ANY VARIABLES YOU MAY NEED BETWEEN THIS LINE... %%%%%%%%%%%%%%%%%
@@ -126,14 +127,14 @@ persistent array_pst = [];
 persistent array_hrs = [];
 persistent array_v = [];
 persistent array_angle = [];
+persistent filtered_position = []
 %%%%%%%%%% ... AND THIS LINE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 idx=1;
 while(idx<=secs)               %% Main simulation loop
  [MPS,HRS,Rg]=Sim1(map);       % Simulates 1-second of running and returns the sensor readings
- 
  array_pst(end+1,1:3)=MPS;
- 
+ filtered_position(end+1,1:3)=MPS;
  fprintf("--------------------\n");
  Fs = 120;               % Sampling frequency                    
  T = 1/Fs;                   % Sampling period       
@@ -166,7 +167,6 @@ while(idx<=secs)               %% Main simulation loop
  
  
  array_hrs(end+1) = freq_1*60*0.5;
- 
  fprintf("--------------------\n");
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % TO DO:
@@ -220,11 +220,19 @@ while(idx<=secs)               %% Main simulation loop
  %
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  if (size(array_pst,1) <= 5)
+  array_v(end+1) = 10;
   xyz = array_pst(end,1:3);       % Replace with your computation of position, the map is 512x512 pixels in size
   hr = array_hrs(end);
+  if (size(array_pst,1) == 1)
+    vel = 10;
+  else
+    vel = array_v(end);
+  endif
  else
+    array_v(end+1) = norm(filtered_position(end,1:3) - filtered_position(end-1,1:3)) * 3.6;
     xyz = [0 0 0];
     hr = 0;
+    vel = mean(array_v);
   for i=1:6
    if (i == 1)
     prop = normcdf(i,6,1) * 2;
@@ -247,10 +255,11 @@ while(idx<=secs)               %% Main simulation loop
   endfor
   array_pst = array_pst(2:end, :);
   array_hrs = array_hrs(2:end);
+  filtered_position = filtered_position(2:end, :);
+  array_v = array_v(2:end);
  end
 
  di=[0 1];               % Replace with your computation for running direction, this should be a 2D unit vector
- vel=5;                  % Replace with your computation of running velocity, in Km/h
 
  if (debug==1)
      figure(5);clf;plot(HRS);
