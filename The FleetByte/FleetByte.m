@@ -134,7 +134,8 @@ idx=1;
 while(idx<=secs)               %% Main simulation loop
  [MPS,HRS,Rg]=Sim1(map);       % Simulates 1-second of running and returns the sensor readings
  array_pst(end+1,1:3)=MPS;
- filtered_position(end+1,1:3)=MPS;
+ filtered_position(end+1,1:3)=array_pst(end, 1:3);
+ array_angle(end+1) = Rg;
  fprintf("--------------------\n");
  Fs = 120;               % Sampling frequency                    
  T = 1/Fs;                   % Sampling period       
@@ -167,6 +168,7 @@ while(idx<=secs)               %% Main simulation loop
  
  
  array_hrs(end+1) = freq_1*60*0.5;
+ disp(array_angle);
  fprintf("--------------------\n");
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % TO DO:
@@ -257,6 +259,7 @@ while(idx<=secs)               %% Main simulation loop
   array_hrs = array_hrs(2:end);
   filtered_position = filtered_position(2:end, :);
   array_v = array_v(2:end);
+  array_angle = array_angle(2:end);
  end
 
  di=[0 1];               % Replace with your computation for running direction, this should be a 2D unit vector
